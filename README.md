@@ -1,6 +1,6 @@
 # JNKeychain
 
-[![CI Status](http://img.shields.io/travis/Jeremias Nunez/JNKeychain.svg?style=flat)](https://travis-ci.org/jeremangnr/JNKeychain)
+[![CI Status](http://img.shields.io/travis/jeremangnr/JNKeychain.svg?style=flat)](https://travis-ci.org/jeremangnr/JNKeychain)
 [![Version](https://img.shields.io/cocoapods/v/JNKeychain.svg?style=flat)](http://cocoadocs.org/docsets/JNKeychain)
 [![License](https://img.shields.io/cocoapods/l/JNKeychain.svg?style=flat)](http://cocoadocs.org/docsets/JNKeychain)
 [![Platform](https://img.shields.io/cocoapods/p/JNKeychain.svg?style=flat)](http://cocoadocs.org/docsets/JNKeychain)

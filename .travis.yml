@@ -17,5 +17,5 @@ script:
 - pod update
 - cd ..
 
-- xctool -workspace Example/JNKeychain.workspace -scheme 'JNKeychain' -sdk iphonesimulator build
+- xctool -workspace Example/JNKeychain.xcworkspace -scheme 'JNKeychain' -sdk iphonesimulator build
 - xcodebuild -workspace Example/JNKeychain.xcworkspace -scheme 'JNKeychainTests' -sdk iphonesimulator clean test

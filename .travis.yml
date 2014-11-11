@@ -12,5 +12,7 @@ before_install:
 script:
 
 - pod lib lint
+- cd Example
 - pod update
+- cd ..
 - xctool test -workspace Example/JNKeychain.xcworkspace -scheme 'JNKeychain' -sdk iphonesimulator ONLY_ACTIVE_ARCH=NO

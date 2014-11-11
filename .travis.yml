@@ -1,6 +1,16 @@
 # reference: http://www.objc.io/issue-6/travis-ci.html
 
 language: objective-c
-# before_install: cd Example && pod install && cd -
+
+before_install:
+
+- gem install cocoapods --quiet
+- pod --version
+- pod setup --silent
+- pod repo update --silent
+
 script:
-- xctool test -workspace Example/${POD_NAME}.xcworkspace -scheme ${POD_NAME} -sdk iphonesimulator ONLY_ACTIVE_ARCH=NO
+
+- pod lib lint
+- pod update
+- xctool test -workspace Example/JNKeychain.xcworkspace -scheme 'JNKeychain' -sdk iphonesimulator ONLY_ACTIVE_ARCH=NO

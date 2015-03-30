@@ -10,6 +10,8 @@
 
 #import "JNKeychain.h"
 
+static NSMutableString *__accessGroup = nil;
+
 @interface JNKeychain ()
 
 + (NSMutableDictionary *)getKeychainQuery:(NSString *)key;
@@ -22,14 +24,31 @@
 + (NSMutableDictionary *)getKeychainQuery:(NSString *)key
 {
     // see http://developer.apple.com/library/ios/#DOCUMENTATION/Security/Reference/keychainservices/Reference/reference.html
-    return [@{(__bridge id)kSecClass            : (__bridge id)kSecClassGenericPassword,
+    NSMutableDictionary *query = [@{(__bridge id)kSecClass            : (__bridge id)kSecClassGenericPassword,
               (__bridge id)kSecAttrService      : key,
               (__bridge id)kSecAttrAccount      : key,
               (__bridge id)kSecAttrAccessible   : (__bridge id)kSecAttrAccessibleAfterFirstUnlock
               } mutableCopy];
+    if ([__accessGroup length] > 0) {
+        query[(__bridge id)(kSecAttrAccessGroup)] = __accessGroup;
+    }
+    return query;
 }
 
 #pragma mark - Public
+
++ (void)setAccessGroup:(NSString *)accessGroup {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        __accessGroup = [[NSMutableString alloc] init];
+    });
+    if (accessGroup == nil) {
+        [__accessGroup setString:@""];
+    } else {
+        [__accessGroup setString:accessGroup];
+    }
+}
+
 + (BOOL)saveValue:(id)value forKey:(NSString*)key
 {
     NSMutableDictionary *keychainQuery = [self getKeychainQuery:key];

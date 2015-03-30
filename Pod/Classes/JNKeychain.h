@@ -13,6 +13,12 @@
 @interface JNKeychain : NSObject
 
 /**
+  @abstract Sets an access group identifier
+  @param accessGroup The access group identifier.
+ */
++ (void)setAccessGroup:(NSString *)accessGroup;
+
+/**
   @abstract Saves a given value to the Keychain
   @param value The value to store.
   @param key The key identifying the value you want to save.

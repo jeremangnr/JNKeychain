@@ -33,10 +33,24 @@
     
     if (group != nil)
     {
-        [keychainQuery setObject:group forKey:(__bridge id)kSecAttrAccessGroup];
+        [keychainQuery setObject:[self getFullAppleIdentifier:group] forKey:(__bridge id)kSecAttrAccessGroup];
     }
     
     return [keychainQuery mutableCopy];
+}
+
+/**
+ Construct full Apple ID: <Bundle Seed ID> . <Bundle  Identifier>
+ @return Apple full identifier
+ */
++ (NSString *)getFullAppleIdentifier:(NSString *)bundleIdentifier
+{
+    NSString *bundleSeedIdentifier = [self getBundleSeedIdentifier];
+    if (bundleSeedIdentifier != nil && [bundleIdentifier rangeOfString:bundleSeedIdentifier].location == NSNotFound)
+    {
+        bundleIdentifier = [NSString stringWithFormat:@"%@.%@", bundleSeedIdentifier, bundleIdentifier];
+    }
+    return bundleIdentifier;
 }
 
 #pragma mark - Public
@@ -105,6 +119,37 @@
 + (id)loadValueForKey:(NSString *)key
 {
     return [self loadValueForKey:key forAccessGroup:nil];
+}
+
+#pragma mark -
+
++ (NSString *)getBundleSeedIdentifier
+{
+    static NSString *bundleSeedID = nil;
+    static dispatch_once_t _once;
+    dispatch_once(&_once, ^{
+        NSDictionary *query = @{
+                                (__bridge id)kSecClass: (__bridge NSString *)kSecClassGenericPassword,
+                                (__bridge id)kSecAttrAccount: @"bundleSeedID",
+                                (__bridge id)kSecAttrService: @"",
+                                (__bridge id)kSecReturnAttributes: (__bridge id)kCFBooleanTrue
+                                };
+        CFDictionaryRef result = nil;
+        OSStatus status = SecItemCopyMatching((__bridge CFDictionaryRef)query, (CFTypeRef *)&result);
+        if (status == errSecItemNotFound)
+        {
+            status = SecItemAdd((__bridge CFDictionaryRef)query, (CFTypeRef *)&result);
+        }
+        if (status == errSecSuccess)
+        {
+            NSString *accessGroup = [(__bridge NSDictionary *)result objectForKey:(__bridge NSString *)kSecAttrAccessGroup];
+            NSArray *components = [accessGroup componentsSeparatedByString:@"."];
+            bundleSeedID = [[components objectEnumerator] nextObject];
+            CFRelease(result);
+        }
+    });
+    
+    return bundleSeedID;
 }
 
 @end

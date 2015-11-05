@@ -26,6 +26,24 @@ To run the example project, clone the repo, and run `pod install` from the Examp
         NSLog(@"Failed to delete!");
     }
 
+In order to share the keychain data across different applications enable Keychain Sharing access group under project capabilities, add Security.framework to the Linked Frameworks and Libraries and use the methods which expect access group:
+
+    NSString *accessGroup = @"demo.JNKeychain.shared";
+
+    if ([JNKeychain saveValue:testValue forKey:testKey forAccessGroup:accessGroup]) {
+        NSLog(@"Correctly saved value '%@' for key '%@'", testValue, testKey);
+    } else {
+        NSLog(@"Failed to save!");
+    }
+
+    NSLog(@"Value for key '%@' is: '%@'", testKey, [JNKeychain loadValueForKey:testKey forAccessGroup:accessGroup]);
+
+    if ([JNKeychain deleteValueForKey:testKey forAccessGroup:accessGroup]) {
+        NSLog(@"Deleted value for key '%@'. Value is: %@", testKey, [JNKeychain loadValueForKey:testKey forAccessGroup:accessGroup]);
+    } else {
+        NSLog(@"Failed to delete!");
+    }
+
 If you don't want to use Cocoapods you can just grab the JNKeychain.h and JNKeychain.m files and put them somewhere in your project.
 
 ## Requirements

@@ -13,6 +13,7 @@ SpecBegin(InitialSpecs)
 describe(@"basic tests", ^{
     NSString *testKey = @"myTestKey";
     NSString *testValue = @"myTestValue";
+    NSString *accessGroup = @"demo.JNKeychain.shared";
     
     it(@"can save values to the keychain", ^{
         BOOL result = [JNKeychain saveValue:testValue forKey:testKey];
@@ -26,6 +27,21 @@ describe(@"basic tests", ^{
     
     it(@"can remove values from the keychain", ^{
         BOOL result = [JNKeychain deleteValueForKey:testKey];
+        expect(result).to.equal(YES);
+    });
+    
+    it(@"can save values to the keychain with an access group", ^{
+        BOOL result = [JNKeychain saveValue:testValue forKey:testKey forAccessGroup:accessGroup];
+        expect(result).to.equal(YES);
+    });
+    
+    it(@"can load values from the keychain with an access group", ^{
+        NSString *value = [JNKeychain loadValueForKey:testKey forAccessGroup:accessGroup];
+        expect(value).to.equal(testValue);
+    });
+    
+    it(@"can remove values from the keychain with an access group", ^{
+        BOOL result = [JNKeychain deleteValueForKey:testKey forAccessGroup:accessGroup];
         expect(result).to.equal(YES);
     });
 });

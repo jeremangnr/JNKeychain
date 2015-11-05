@@ -59,4 +59,10 @@
  */
 + (id)loadValueForKey:(NSString*)key;
 
+/**
+ @abstract Returns bundle seed ID for the current application
+ @return The value of bundle seed ID wor nil if failed to get the property
+ */
++ (NSString *)getBundleSeedIdentifier;
+
 @end

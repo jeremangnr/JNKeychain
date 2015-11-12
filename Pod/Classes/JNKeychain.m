@@ -12,29 +12,54 @@
 
 @interface JNKeychain ()
 
-+ (NSMutableDictionary *)getKeychainQuery:(NSString *)key;
++ (NSMutableDictionary *)getKeychainQuery:(NSString *)key forAccessGroup:(NSString *)group;
 
 @end
 
 @implementation JNKeychain
 
 #pragma mark - Private
-+ (NSMutableDictionary *)getKeychainQuery:(NSString *)key
+
++ (NSMutableDictionary *)getKeychainQuery:(NSString *)key forAccessGroup:(NSString *)group
 {
     // see http://developer.apple.com/library/ios/#DOCUMENTATION/Security/Reference/keychainservices/Reference/reference.html
-    return [@{(__bridge id)kSecClass            : (__bridge id)kSecClassGenericPassword,
-              (__bridge id)kSecAttrService      : key,
-              (__bridge id)kSecAttrAccount      : key,
-              (__bridge id)kSecAttrAccessible   : (__bridge id)kSecAttrAccessibleAfterFirstUnlock
-              } mutableCopy];
+    
+    NSMutableDictionary *keychainQuery = [NSMutableDictionary dictionaryWithDictionary:
+                                          @{(__bridge id)kSecClass            : (__bridge id)kSecClassGenericPassword,
+                                            (__bridge id)kSecAttrService      : key,
+                                            (__bridge id)kSecAttrAccount      : key,
+                                            (__bridge id)kSecAttrAccessible   : (__bridge id)kSecAttrAccessibleAfterFirstUnlock
+                                            }];
+    
+    if (group != nil)
+    {
+        [keychainQuery setObject:[self getFullAppleIdentifier:group] forKey:(__bridge id)kSecAttrAccessGroup];
+    }
+    
+    return [keychainQuery mutableCopy];
+}
+
+/**
+ Construct full Apple ID: <Bundle Seed ID> . <Bundle  Identifier>
+ @return Apple full identifier
+ */
++ (NSString *)getFullAppleIdentifier:(NSString *)bundleIdentifier
+{
+    NSString *bundleSeedIdentifier = [self getBundleSeedIdentifier];
+    if (bundleSeedIdentifier != nil && [bundleIdentifier rangeOfString:bundleSeedIdentifier].location == NSNotFound)
+    {
+        bundleIdentifier = [NSString stringWithFormat:@"%@.%@", bundleSeedIdentifier, bundleIdentifier];
+    }
+    return bundleIdentifier;
 }
 
 #pragma mark - Public
-+ (BOOL)saveValue:(id)value forKey:(NSString*)key
+
++ (BOOL)saveValue:(id)value forKey:(NSString*)key forAccessGroup:(NSString *)group
 {
-    NSMutableDictionary *keychainQuery = [self getKeychainQuery:key];
+    NSMutableDictionary *keychainQuery = [self getKeychainQuery:key forAccessGroup:group];
     // delete any previous value with this key (we could use SecItemUpdate but its unnecesarily more complicated)
-    [self deleteValueForKey:key];
+    [self deleteValueForKey:key forAccessGroup:group];
     
     [keychainQuery setObject:[NSKeyedArchiver archivedDataWithRootObject:value] forKey:(__bridge id)kSecValueData];
     
@@ -42,18 +67,32 @@
     return CHECK_OSSTATUS_ERROR(result);
 }
 
-+ (BOOL)deleteValueForKey:(NSString *)key
++ (BOOL)saveValue:(id)value forKey:(NSString*)key
 {
-    NSMutableDictionary *keychainQuery = [self getKeychainQuery:key];
+    return [self saveValue:value forKey:key forAccessGroup:nil];
+}
+
+#pragma mark -
+
++ (BOOL)deleteValueForKey:(NSString *)key forAccessGroup:(NSString *)group
+{
+    NSMutableDictionary *keychainQuery = [self getKeychainQuery:key forAccessGroup:group];
     
     OSStatus result = SecItemDelete((__bridge CFDictionaryRef)keychainQuery);
     return CHECK_OSSTATUS_ERROR(result);
 }
 
-+ (id)loadValueForKey:(NSString *)key
++ (BOOL)deleteValueForKey:(NSString *)key
+{
+    return[self deleteValueForKey:key forAccessGroup:nil];
+}
+
+#pragma mark -
+
++ (id)loadValueForKey:(NSString*)key forAccessGroup:(NSString *)group
 {
     id value = nil;
-    NSMutableDictionary *keychainQuery = [self getKeychainQuery:key];
+    NSMutableDictionary *keychainQuery = [self getKeychainQuery:key forAccessGroup:group];
     CFDataRef keyData = NULL;
     
     [keychainQuery setObject:(__bridge id)kCFBooleanTrue forKey:(__bridge id)kSecReturnData];
@@ -75,6 +114,42 @@
     }
     
     return value;
+}
+
++ (id)loadValueForKey:(NSString *)key
+{
+    return [self loadValueForKey:key forAccessGroup:nil];
+}
+
+#pragma mark -
+
++ (NSString *)getBundleSeedIdentifier
+{
+    static NSString *bundleSeedID = nil;
+    static dispatch_once_t _once;
+    dispatch_once(&_once, ^{
+        NSDictionary *query = @{
+                                (__bridge id)kSecClass: (__bridge NSString *)kSecClassGenericPassword,
+                                (__bridge id)kSecAttrAccount: @"bundleSeedID",
+                                (__bridge id)kSecAttrService: @"",
+                                (__bridge id)kSecReturnAttributes: (__bridge id)kCFBooleanTrue
+                                };
+        CFDictionaryRef result = nil;
+        OSStatus status = SecItemCopyMatching((__bridge CFDictionaryRef)query, (CFTypeRef *)&result);
+        if (status == errSecItemNotFound)
+        {
+            status = SecItemAdd((__bridge CFDictionaryRef)query, (CFTypeRef *)&result);
+        }
+        if (status == errSecSuccess)
+        {
+            NSString *accessGroup = [(__bridge NSDictionary *)result objectForKey:(__bridge NSString *)kSecAttrAccessGroup];
+            NSArray *components = [accessGroup componentsSeparatedByString:@"."];
+            bundleSeedID = [[components objectEnumerator] nextObject];
+            CFRelease(result);
+        }
+    });
+    
+    return bundleSeedID;
 }
 
 @end

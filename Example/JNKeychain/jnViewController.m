@@ -19,21 +19,32 @@
 {
     [super viewDidAppear:animated];
     
-    NSString *testKey = @"myTestKey";
-    NSString *testValue = @"myTestValue";
+    // The Keychain Access Group defined under Keychain Sharing Capabilities and in the corresponding Entitlements file
+    NSString *accessGroup = @"demo.JNKeychain.shared";
+    
+    NSLog(@"Running generic Keychain test");
+    [self testKeychain:@"genericTestValue" forKey:@"genericTestKey" andAccessGroup:nil];
+    
+    NSLog(@"Running Keychain test with access group sharing");
+    [self testKeychain:@"accessGroupTestValue" forKey:@"accessGroupTestKey" andAccessGroup:accessGroup];
+}
 
-    if ([JNKeychain saveValue:testValue forKey:testKey]) {
-        NSLog(@"Correctly saved value '%@' for key '%@'", testValue, testKey);
+- (void)testKeychain:(NSString *)value forKey:(NSString *)key andAccessGroup:(NSString *)group
+{
+    NSString *forGroupLog = (group ? [NSString stringWithFormat:@" for access group '%@'", group] : @"");
+                          
+    if ([JNKeychain saveValue:value forKey:key forAccessGroup:group]) {
+        NSLog(@"Correctly saved value '%@' for key '%@'%@", value, key, forGroupLog);
     } else {
-        NSLog(@"Failed to save!");
+        NSLog(@"Failed to save!%@", forGroupLog);
     }
     
-    NSLog(@"Value for key '%@' is: '%@'", testKey, [JNKeychain loadValueForKey:testKey]);
+    NSLog(@"Value for key '%@' is: '%@'%@", key, [JNKeychain loadValueForKey:key forAccessGroup:group], forGroupLog);
     
-    if ([JNKeychain deleteValueForKey:testKey]) {
-        NSLog(@"Deleted value for key '%@'. Value is: %@", testKey, [JNKeychain loadValueForKey:testKey]);
+    if ([JNKeychain deleteValueForKey:key forAccessGroup:group]) {
+        NSLog(@"Deleted value for key '%@'. Value is: '%@'%@", key, [JNKeychain loadValueForKey:key forAccessGroup:group], forGroupLog);
     } else {
-        NSLog(@"Failed to delete!");
+        NSLog(@"Failed to delete!%@", forGroupLog);
     }
 }
 

@@ -36,7 +36,7 @@
         [keychainQuery setObject:[self getFullAppleIdentifier:group] forKey:(__bridge id)kSecAttrAccessGroup];
     }
     
-    return [keychainQuery mutableCopy];
+    return keychainQuery;
 }
 
 /**
@@ -84,7 +84,7 @@
 
 + (BOOL)deleteValueForKey:(NSString *)key
 {
-    return[self deleteValueForKey:key forAccessGroup:nil];
+    return [self deleteValueForKey:key forAccessGroup:nil];
 }
 
 #pragma mark -
@@ -125,31 +125,44 @@
 
 + (NSString *)getBundleSeedIdentifier
 {
-    static NSString *bundleSeedID = nil;
-    static dispatch_once_t _once;
-    dispatch_once(&_once, ^{
-        NSDictionary *query = @{
-                                (__bridge id)kSecClass: (__bridge NSString *)kSecClassGenericPassword,
-                                (__bridge id)kSecAttrAccount: @"bundleSeedID",
-                                (__bridge id)kSecAttrService: @"",
-                                (__bridge id)kSecReturnAttributes: (__bridge id)kCFBooleanTrue
-                                };
-        CFDictionaryRef result = nil;
-        OSStatus status = SecItemCopyMatching((__bridge CFDictionaryRef)query, (CFTypeRef *)&result);
-        if (status == errSecItemNotFound)
-        {
-            status = SecItemAdd((__bridge CFDictionaryRef)query, (CFTypeRef *)&result);
-        }
-        if (status == errSecSuccess)
-        {
-            NSString *accessGroup = [(__bridge NSDictionary *)result objectForKey:(__bridge NSString *)kSecAttrAccessGroup];
-            NSArray *components = [accessGroup componentsSeparatedByString:@"."];
-            bundleSeedID = [[components objectEnumerator] nextObject];
-            CFRelease(result);
-        }
-    });
+    static __strong NSString *bundleSeedIdentifier = nil;
     
-    return bundleSeedID;
+    if (bundleSeedIdentifier == nil)
+    {
+        @synchronized(self) {
+            if (bundleSeedIdentifier == nil)
+            {
+                NSString *_bundleSeedIdentifier = nil;
+                NSDictionary *query = @{
+                                        (__bridge id)kSecClass: (__bridge NSString *)kSecClassGenericPassword,
+                                        (__bridge id)kSecAttrAccount: @"bundleSeedID",
+                                        (__bridge id)kSecAttrService: @"",
+                                        (__bridge id)kSecReturnAttributes: (__bridge id)kCFBooleanTrue
+                                        };
+                CFDictionaryRef result = nil;
+                OSStatus status = SecItemCopyMatching((__bridge CFDictionaryRef)query, (CFTypeRef *)&result);
+                if (status == errSecItemNotFound)
+                {
+                    status = SecItemAdd((__bridge CFDictionaryRef)query, (CFTypeRef *)&result);
+                }
+                if (status == errSecSuccess)
+                {
+                    NSString *accessGroup = [(__bridge NSDictionary *)result objectForKey:(__bridge NSString *)kSecAttrAccessGroup];
+                    NSArray *components = [accessGroup componentsSeparatedByString:@"."];
+                    _bundleSeedIdentifier = [[components objectEnumerator] nextObject];
+                    CFRelease(result);
+                }
+                //
+                // For some reasons GC releases the value of _bundleSeedIdentifier string variable on the next method invocation.
+                // As a result it becomes a zombie object referencing to an unallocated memory.
+                // Assigning its value on the first method call to a static variable by explicit object copy resolves the issue.
+                //
+                bundleSeedIdentifier = [_bundleSeedIdentifier copy];
+            }
+        }
+    }
+    
+    return bundleSeedIdentifier;
 }
 
 @end

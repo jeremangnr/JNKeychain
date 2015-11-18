@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = "JNKeychain"
-  s.version          = "0.1.2"
+  s.version          = "0.1.3"
   s.summary          = "Simple, easy to use wrapper to store/load/delete values from the Keychain."
   s.homepage         = "https://github.com/jeremangnr/JNKeychain"
   s.license          = 'MIT'

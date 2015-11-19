@@ -152,12 +152,10 @@
                     _bundleSeedIdentifier = [[components objectEnumerator] nextObject];
                     CFRelease(result);
                 }
-                //
-                // For some reasons GC releases the value of _bundleSeedIdentifier string variable on the next method invocation.
-                // As a result it becomes a zombie object referencing to an unallocated memory.
-                // Assigning its value on the first method call to a static variable by explicit object copy resolves the issue.
-                //
-                bundleSeedIdentifier = [_bundleSeedIdentifier copy];
+                if (_bundleSeedIdentifier != nil)
+                {
+                    bundleSeedIdentifier = [_bundleSeedIdentifier copy];
+                }
             }
         }
     }

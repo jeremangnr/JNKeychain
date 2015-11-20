@@ -31,8 +31,7 @@
                                             (__bridge id)kSecAttrAccessible   : (__bridge id)kSecAttrAccessibleAfterFirstUnlock
                                             }];
     
-    if (group != nil)
-    {
+    if (group != nil) {
         [keychainQuery setObject:[self getFullAppleIdentifier:group] forKey:(__bridge id)kSecAttrAccessGroup];
     }
     
@@ -46,8 +45,7 @@
 + (NSString *)getFullAppleIdentifier:(NSString *)bundleIdentifier
 {
     NSString *bundleSeedIdentifier = [self getBundleSeedIdentifier];
-    if (bundleSeedIdentifier != nil && [bundleIdentifier rangeOfString:bundleSeedIdentifier].location == NSNotFound)
-    {
+    if (bundleSeedIdentifier != nil && [bundleIdentifier rangeOfString:bundleSeedIdentifier].location == NSNotFound) {
         bundleIdentifier = [NSString stringWithFormat:@"%@.%@", bundleSeedIdentifier, bundleIdentifier];
     }
     return bundleIdentifier;
@@ -64,6 +62,7 @@
     [keychainQuery setObject:[NSKeyedArchiver archivedDataWithRootObject:value] forKey:(__bridge id)kSecValueData];
     
     OSStatus result = SecItemAdd((__bridge CFDictionaryRef)keychainQuery, NULL);
+    
     return CHECK_OSSTATUS_ERROR(result);
 }
 
@@ -79,6 +78,7 @@
     NSMutableDictionary *keychainQuery = [self getKeychainQuery:key forAccessGroup:group];
     
     OSStatus result = SecItemDelete((__bridge CFDictionaryRef)keychainQuery);
+    
     return CHECK_OSSTATUS_ERROR(result);
 }
 
@@ -127,11 +127,9 @@
 {
     static __strong NSString *bundleSeedIdentifier = nil;
     
-    if (bundleSeedIdentifier == nil)
-    {
+    if (bundleSeedIdentifier == nil) {
         @synchronized(self) {
-            if (bundleSeedIdentifier == nil)
-            {
+            if (bundleSeedIdentifier == nil) {
                 NSString *_bundleSeedIdentifier = nil;
                 NSDictionary *query = @{
                                         (__bridge id)kSecClass: (__bridge NSString *)kSecClassGenericPassword,
@@ -141,19 +139,16 @@
                                         };
                 CFDictionaryRef result = nil;
                 OSStatus status = SecItemCopyMatching((__bridge CFDictionaryRef)query, (CFTypeRef *)&result);
-                if (status == errSecItemNotFound)
-                {
+                if (status == errSecItemNotFound) {
                     status = SecItemAdd((__bridge CFDictionaryRef)query, (CFTypeRef *)&result);
                 }
-                if (status == errSecSuccess)
-                {
+                if (status == errSecSuccess) {
                     NSString *accessGroup = [(__bridge NSDictionary *)result objectForKey:(__bridge NSString *)kSecAttrAccessGroup];
                     NSArray *components = [accessGroup componentsSeparatedByString:@"."];
                     _bundleSeedIdentifier = [[components objectEnumerator] nextObject];
                     CFRelease(result);
                 }
-                if (_bundleSeedIdentifier != nil)
-                {
+                if (_bundleSeedIdentifier != nil) {
                     bundleSeedIdentifier = [_bundleSeedIdentifier copy];
                 }
             }

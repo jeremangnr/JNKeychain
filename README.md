@@ -44,7 +44,7 @@ In order to share the keychain data across different applications enable Keychai
         NSLog(@"Failed to delete!");
     }
 
-If you don't want to use Cocoapods you can just grab the JNKeychain.h and JNKeychain.m files and put them somewhere in your project.
+If you don't want to use CocoaPods you can just grab the JNKeychain.h and JNKeychain.m files and put them somewhere in your project.
 
 ## Requirements
 
